@@ -1,4 +1,4 @@
-package token
+package tokens
 
 type TokenType int
 
@@ -96,7 +96,7 @@ const (
 )
 
 type Token struct {
-	token_type TokenType
-	lexeme     string
-	line       uint
+	Type TokenType
+	Lexeme     string
+	Line       uint
 }
