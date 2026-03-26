@@ -2,7 +2,14 @@ package lexer
 
 import (
 	"Me/tokens"
+	"unicode"
 )
+
+// Keywords map
+var keywords = map[string]tokens.TokenType{
+	"let": tokens.LET,
+	"if":  tokens.IF,
+}
 
 // Scanner struct
 type Scanner struct {
@@ -13,7 +20,7 @@ type Scanner struct {
 }
 
 // Initialize the scanner
-func init_scanner(source string) *Scanner {
+func initScanner(source string) *Scanner {
 	return &Scanner{
 		source:  source,
 		start:   0,
@@ -33,7 +40,7 @@ func (s *Scanner) advance() byte {
 }
 
 // Returns true if we are at the end of the file
-func (s *Scanner) is_at_end() bool {
+func (s *Scanner) isAtEnd() bool {
 	if s.current >= len(s.source) {
 		return true
 	}
@@ -42,14 +49,14 @@ func (s *Scanner) is_at_end() bool {
 
 // Checks the next character
 func (s *Scanner) peek() byte {
-	if s.is_at_end() {
+	if s.isAtEnd() {
 		return 0
 	}
 	return s.source[s.current]
 }
 
 // Checks the second next character
-func (s *Scanner) peek_next() byte {
+func (s *Scanner) peekNext() byte {
 	if s.current+1 >= len(s.source) {
 		return 0
 	}
@@ -57,7 +64,7 @@ func (s *Scanner) peek_next() byte {
 }
 
 // Skips whitespace
-func (s *Scanner) skip_whitespace() {
+func (s *Scanner) skipWhitespace() {
 
 	for {
 		switch s.peek() {
@@ -67,11 +74,11 @@ func (s *Scanner) skip_whitespace() {
 			s.line += 1
 			s.advance()
 		case '/':
-			if s.peek_next() == '/' {
+			if s.peekNext() == '/' {
 				s.advance()
 				s.advance()
 				for {
-					if !s.is_at_end() && s.peek() != '\n' {
+					if !s.isAtEnd() && s.peek() != '\n' {
 						s.advance()
 					} else {
 						break
@@ -87,7 +94,7 @@ func (s *Scanner) skip_whitespace() {
 }
 
 // Create new tokens
-func (s *Scanner) create_token(token_type tokens.TokenType) tokens.Token {
+func (s *Scanner) createToken(token_type tokens.TokenType) tokens.Token {
 	lexeme := s.source[s.start:s.current]
 	return tokens.Token{
 		Type:   token_type,
@@ -97,7 +104,7 @@ func (s *Scanner) create_token(token_type tokens.TokenType) tokens.Token {
 }
 
 // Creates a error token for error reporting
-func (s *Scanner) error_token(message string) tokens.Token {
+func (s *Scanner) errorToken(message string) tokens.Token {
 	lexeme := message
 	return tokens.Token{
 		Type:   tokens.ERROR_TOKEN,
@@ -108,7 +115,7 @@ func (s *Scanner) error_token(message string) tokens.Token {
 
 // Helper function to evaluate conditional advances - '!=' , '=='
 func (s *Scanner) match(expected byte) bool {
-	if s.is_at_end() {
+	if s.isAtEnd() {
 		return false
 	}
 	if s.source[s.current] != expected {
@@ -118,3 +125,124 @@ func (s *Scanner) match(expected byte) bool {
 	return true
 }
 
+// Helper function to check if it is a character literal (Inside single quotes)
+func (s *Scanner) isCharLiteral() tokens.Token {
+	// Checks for empty literal
+	if s.isAtEnd() {
+		return s.errorToken("Unterminated character literal.")
+	}
+	if s.peek() == '\'' {
+		return s.errorToken("Empty character literal.")
+	}
+	// Handle Escape Sequence
+	if s.peek() == '\\' {
+		// Consumes the backslash
+		s.advance()
+		switch s.peek() {
+		case '\'', '"', '\\', 'n', '{', '}', 't', 'r', '0':
+			s.advance() // Consumes the valid escape character
+		default:
+			return s.errorToken("Invalid escape sequence in character literal.")
+		}
+		// Handles regular character
+	} else {
+		if s.isAtEnd() {
+			return s.errorToken("Unterminated character literal.")
+		}
+		s.advance()
+	}
+	// Throws error if not terminated properly
+	if s.isAtEnd() {
+		return s.errorToken("Unterminated character literal.")
+	}
+	if s.peek() != '\'' {
+		return s.errorToken("Character literal containing multiple character.")
+	}
+	if s.isAtEnd() {
+		return s.errorToken("Unterminated character literal.")
+	}
+	// Consume the closing single quote and return the char as a token
+	s.advance()
+	return s.createToken(tokens.CHAR_LITERAL)
+}
+
+// Helper function to check if it is a string literal (Inside double quotes)
+func (s *Scanner) isStringLiteral() tokens.Token {
+	// Loop continues until file ends or double quote found
+	for s.peek() != '"' || !s.isAtEnd() {
+		// Consumes the newline and increases line count
+		if s.peek() == '\n' {
+			s.line += 1
+			s.advance()
+		} else if s.peek() == '\\' { // Handles escape sequence
+			s.advance()
+			if s.isAtEnd() {
+				return s.errorToken("Unterminated string after escape.")
+			}
+			switch s.peek() {
+			case '\'', '"', '\\', 'n', '{', '}', 't', 'r', '0':
+				s.advance()
+			default:
+				return s.errorToken("Invalid escape sequence.")
+			}
+			// Keep consuming characters
+		} else {
+			s.advance()
+		}
+	}
+	// Throws error if string does not end
+	if s.isAtEnd() {
+		return s.errorToken("Unterminated string")
+	}
+	// Consume the closing double quote and return the string as a token
+	s.advance()
+	return s.createToken(tokens.STRING_LITERAL)
+}
+
+// Helper function to check if it is a number literal (Integer literal of float literal)
+func (s *Scanner) isNumberLiteral() tokens.Token {
+	// Flag to check if float
+	isFloat := false
+	// Consumes digit/digits
+	for unicode.IsDigit(rune(s.peek())) {
+		s.advance()
+	}
+	// If a dot is found and the next character is also a digit it is considered a float
+	if s.peek() == '.' && unicode.IsDigit(rune(s.peekNext())) {
+		// Sets the flag to true
+		isFloat = true
+		// Consumes the dot
+		s.advance()
+		// Consumes remaining digit/digits
+		for unicode.IsDigit(rune(s.peek())) {
+			s.advance()
+		}
+	}
+	// Create a token based on flag
+	if isFloat {
+		return s.createToken(tokens.FLOAT_LITERAL)
+	} else {
+		return s.createToken(tokens.INT_LITERAL)
+	}
+}
+
+// Function to check if it is an identifier (checks keywords as well)
+func (s *Scanner) isIdentifier() tokens.Token {
+	// Consume alphanumeric characters and underscores
+	for !s.isAtEnd() && (unicode.IsLetter(rune(s.peek())) || unicode.IsDigit(rune(s.peek())) || s.peek() == '_') {
+		s.advance()
+	}
+	// Slice the source string to get the recent read word
+	text := s.source[s.start:s.current]
+	// Look for the word in the map and returns the token type and a boolean if it exists or not
+	tokenType, exists := keywords[text]
+	// ^         ^
+	// |         |
+	// Type      boolean
+	if exists {
+		// Creates and returns the token if it's a keyword
+		return s.createToken(tokenType)
+	}
+	//  It's not a keyword, returns IDENTIFIER token
+	return s.createToken(tokens.IDENTIFIER)
+}
