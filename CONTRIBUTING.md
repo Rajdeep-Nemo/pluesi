@@ -24,7 +24,12 @@ Thanks for taking the time to contribute.
 * Prefer simple, readable code over cleverness
 
 ## Commits
+* Prefix with:
 
+  * `bug:`
+  * `feature:`
+  * `docs:`
+  * `refactor:`
 * Use short, descriptive messages
 * One logical change per commit
 
