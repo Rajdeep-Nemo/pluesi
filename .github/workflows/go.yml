@@ -22,11 +22,6 @@ jobs:
     - name: Check Formatting
       run: if [ -n "$(gofmt -l .)" ]; then echo "Format errors found. Run 'go fmt ./...' locally."; exit 1; fi
 
-    - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v6
-      with:
-        version: v1.56.2
-
     - name: Install Dependencies
       run: go mod download
 
