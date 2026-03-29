@@ -22,12 +22,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 ---
 
-## Contributors
-
-See [CONTRIBUTORS.md](CONTRIBUTORS.md) for recognition and honor of contributors.
-
----
-
 ## Security
 
 See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
