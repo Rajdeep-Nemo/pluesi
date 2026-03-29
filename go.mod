@@ -1,3 +1,3 @@
-module Me
+module pluesi
 
 go 1.26.1
