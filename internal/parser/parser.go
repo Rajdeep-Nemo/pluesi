@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 	"pluesi/internal/ast"
 	"pluesi/internal/token"
 )
@@ -15,7 +16,9 @@ type Parser struct {
 
 // New creates a new parser instance with the given tokens
 func New(tokens []token.Token) *Parser {
-	return &Parser{tokens: tokens, pos: 0}
+	p := &Parser{tokens: tokens, pos: 0}
+	p.registerParseFns()
+	return p
 }
 
 // To retrieve errors encountered during parsing
@@ -149,7 +152,7 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		typeHint := p.parseTypeAnnotation()
 		if p.check(token.EQUAL) {
 			p.advance()
-			value := p.parseExpression()
+			value := p.parseExpression(LOWEST)
 			p.consumeSemicolon()
 			return &ast.LetStatement{Token: letToken, Name: name, TypeHint: typeHint, Value: value}
 		} else {
@@ -158,7 +161,7 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		}
 	} else if p.check(token.EQUAL) { // if '=' parse expression
 		p.advance()
-		value := p.parseExpression()
+		value := p.parseExpression(LOWEST)
 		p.consumeSemicolon()
 		return &ast.LetStatement{Token: letToken, Name: name, TypeHint: nil, Value: value}
 	} else { // if nothing then error
@@ -167,38 +170,45 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	return nil
 }
 
-// Parses a const statement, which must include a type annotation and an initializer.
+// Parses a const statement, which MUST include a type annotation and an initializer.
 func (p *Parser) parseConstStatement() *ast.ConstStatement {
 	// Consume const token
 	constToken := p.advance()
+	
 	// Expect and consume identifier
 	nameToken, ok := p.expect(token.IDENTIFIER)
 	if !ok {
 		return nil
 	}
 	name := &ast.Identifier{Token: nameToken, Value: nameToken.Lexeme}
-	// if ':' parse type
-	if p.check(token.COLON) {
-		p.advance()
-		typeHint := p.parseTypeAnnotation()
-		if p.check(token.EQUAL) {
-			p.advance()
-			value := p.parseExpression()
-			p.consumeSemicolon()
-			return &ast.ConstStatement{Token: constToken, Name: name, TypeHint: typeHint, Value: value}
-		} else {
-			p.errorf("const %q must be initialized at line %d", name.Value, p.currentToken().Line)
-			return nil
-		}
-	} else if p.check(token.EQUAL) { // if '=' parse expression
-		p.advance()
-		value := p.parseExpression()
-		p.consumeSemicolon()
-		return &ast.ConstStatement{Token: constToken, Name: name, TypeHint: nil, Value: value}
-	} else { // if nothing then error
-		p.errorf("uninitialized variable %q must have a type annotation at line %d", name.Value, p.currentToken().Line)
+
+	// 1. Enforce Type Annotation
+	if !p.check(token.COLON) {
+		p.errorf("const %q must have a type annotation at line %d", name.Value, p.currentToken().Line)
+		return nil
 	}
-	return nil
+	p.advance() // Consume ':'
+	typeHint := p.parseTypeAnnotation()
+
+	// 2. Enforce Initialization
+	if !p.check(token.EQUAL) {
+		p.errorf("const %q must be initialized at line %d", name.Value, p.currentToken().Line)
+		return nil
+	}
+	p.advance() // Consume '='
+	
+	// 3. Parse the value expression
+	value := p.parseExpression(LOWEST)
+	p.consumeSemicolon()
+	
+	return &ast.ConstStatement{Token: constToken, Name: name, TypeHint: typeHint, Value: value}
+}
+
+// Parses an identifier (variable) in an expression
+func (p *Parser) parseIdentifier() ast.Expression {
+	ident := &ast.Identifier{Token: p.currentToken(), Value: p.currentToken().Lexeme}
+	p.advance()
+	return ident
 }
 
 // Map of assignment operators for easy lookup
@@ -226,15 +236,231 @@ func (p *Parser) parseAssignmentStatement() *ast.AssignStatement {
 		return nil
 	}
 	p.advance()
-	value := p.parseExpression()
+	value := p.parseExpression(LOWEST)
 	p.consumeSemicolon()
 	return &ast.AssignStatement{Token: opToken, Target: name, Operator: assignOp, Value: value}
 }
 
-// temporary stub for expression parsing, just returns an identifier with the current token's lexeme
-func (p *Parser) parseExpression() ast.Expression {
-	// Temporary stub — returns current token as identifier
-	t := p.currentToken()
+// Parses an expression using Pratt parsing technique.
+func (p *Parser) parseExpression(precedence Precedence) ast.Expression {
+	// Fetch the prefix parse function based on the current token type
+	prefix := prefixParseFns[p.currentToken().Type]
+	if prefix == nil {
+		p.errorf("no prefix parse function for %q at line %d", p.currentToken().Lexeme, p.currentToken().Line)
+		return nil
+	}
+	// Call the prefix parse function to get the left-hand side expression
+	leftExp := prefix()
+	// Loop to parse infix expressions as long as the next token has a higher precedence
+	for precedence < p.peekPrecedence() {
+		infix := infixParseFns[p.peekToken().Type]
+		if infix == nil {
+			return leftExp
+		}
+		p.advance()
+		leftExp = infix(leftExp)
+	}
+	return leftExp
+}
+
+// Precedence orders for operators, used in expression parsing to determine which operations bind more tightly than others
+type Precedence int
+
+const (
+	LOWEST     Precedence = iota
+	OR                    // ||
+	AND                   // &&
+	EQUALS                // == !=
+	COMPARISON            // < > <= >=
+	SUM                   // + -
+	PRODUCT               // * / %
+	PREFIX                // -x !x
+	CALL                  // foo()
+	INDEX                 // arr[]
+)
+
+// Precedence lookup table operators
+var precedences = map[token.TokenType]Precedence{
+	token.OR:            OR,
+	token.AND:           AND,
+	token.EQUAL_EQUAL:   EQUALS,
+	token.BANG_EQUAL:    EQUALS,
+	token.LESS:          COMPARISON,
+	token.LESS_EQUAL:    COMPARISON,
+	token.GREATER:       COMPARISON,
+	token.GREATER_EQUAL: COMPARISON,
+	token.PLUS:          SUM,
+	token.MINUS:         SUM,
+	token.STAR:          PRODUCT,
+	token.SLASH:         PRODUCT,
+	token.PERCENT:       PRODUCT,
+}
+
+func (p *Parser) currentPrecedence() Precedence {
+	if pr, ok := precedences[p.currentToken().Type]; ok {
+		return pr
+	}
+	return LOWEST
+}
+
+func (p *Parser) peekPrecedence() Precedence {
+	if pr, ok := precedences[p.peekToken().Type]; ok {
+		return pr
+	}
+	return LOWEST
+}
+
+// Function mapping to determine how to parse different expressions based on the current token
+type prefixParseFn func() ast.Expression
+type infixParseFn func(ast.Expression) ast.Expression
+
+var prefixParseFns map[token.TokenType]prefixParseFn
+var infixParseFns map[token.TokenType]infixParseFn
+
+func (p *Parser) registerParseFns() {
+	// Prefix functions
+	prefixParseFns = map[token.TokenType]prefixParseFn{
+		token.IDENTIFIER:     p.parseIdentifier,
+		token.INT_LITERAL:    p.parseIntegerLiteral,
+		token.FLOAT_LITERAL:  p.parseFloatLiteral,
+		token.STRING_LITERAL: p.parseStringLiteral,
+		token.CHAR_LITERAL:   p.parseCharLiteral,
+		token.TRUE:           p.parseBoolLiteral,
+		token.FALSE:          p.parseBoolLiteral,
+		token.NIL_LITERAL:    p.parseNilLiteral,
+		token.BANG:           p.parsePrefixExpression,
+		token.MINUS:          p.parsePrefixExpression,
+		token.OPEN_PAREN:     p.parseGroupedExpression,
+	}
+	// Infix functions
+	infixParseFns = map[token.TokenType]infixParseFn{
+		token.PLUS:          p.parseInfixExpression,
+		token.MINUS:         p.parseInfixExpression,
+		token.STAR:          p.parseInfixExpression,
+		token.SLASH:         p.parseInfixExpression,
+		token.PERCENT:       p.parseInfixExpression,
+		token.EQUAL_EQUAL:   p.parseInfixExpression,
+		token.BANG_EQUAL:    p.parseInfixExpression,
+		token.LESS:          p.parseInfixExpression,
+		token.LESS_EQUAL:    p.parseInfixExpression,
+		token.GREATER:       p.parseInfixExpression,
+		token.GREATER_EQUAL: p.parseInfixExpression,
+		token.AND:           p.parseInfixExpression,
+		token.OR:            p.parseInfixExpression,
+	}
+}
+
+// Parses an integer literal: e.g., 5, 100
+func (p *Parser) parseIntegerLiteral() ast.Expression {
+	lit := &ast.IntegerLiteral{Token: p.currentToken()}
+
+	value, err := strconv.ParseUint(p.currentToken().Lexeme, 10, 64)
+	if err != nil {
+		p.errorf("could not parse %q as integer at line %d", p.currentToken().Lexeme, p.currentToken().Line)
+		return nil
+	}
+
+	lit.Value = value
 	p.advance()
-	return &ast.Identifier{Token: t, Value: t.Lexeme}
+	return lit
+}
+
+// Parses a float literal: e.g., 3.14
+func (p *Parser) parseFloatLiteral() ast.Expression {
+	lit := &ast.FloatLiteral{Token: p.currentToken()}
+
+	value, err := strconv.ParseFloat(p.currentToken().Lexeme, 64)
+	if err != nil {
+		p.errorf("could not parse %q as float at line %d", p.currentToken().Lexeme, p.currentToken().Line)
+		return nil
+	}
+
+	lit.Value = value
+	p.advance()
+	return lit
+}
+
+// Parses a string literal: e.g., "hello world"
+func (p *Parser) parseStringLiteral() ast.Expression {
+	lexeme := p.currentToken().Lexeme
+	value := lexeme
+	if len(lexeme) >= 2 && lexeme[0] == '"' && lexeme[len(lexeme)-1] == '"' {
+		value = lexeme[1 : len(lexeme)-1] // Strip the " quotes
+	}
+	
+	lit := &ast.StringLiteral{Token: p.currentToken(), Value: value}
+	p.advance()
+	return lit
+}
+
+// Parses boolean literals: true, false
+func (p *Parser) parseBoolLiteral() ast.Expression {
+	lit := &ast.BoolLiteral{
+		Token: p.currentToken(),
+		Value: p.currentToken().Type == token.TRUE,
+	}
+	p.advance()
+	return lit
+}
+
+// Parses a char literal: e.g., 'a'
+func (p *Parser) parseCharLiteral() ast.Expression {
+	lexeme := p.currentToken().Lexeme
+	var val rune
+	if len(lexeme) >= 3 {
+		val = rune(lexeme[1])
+	}
+	
+	lit := &ast.CharLiteral{Token: p.currentToken(), Value: val}
+	p.advance()
+	return lit
+}
+
+// Parses the NIL literal
+func (p *Parser) parseNilLiteral() ast.Expression {
+	lit := &ast.NilLiteral{Token: p.currentToken()}
+	p.advance()
+	return lit
+}
+
+// Parses prefix expressions like -5 or !true
+func (p *Parser) parsePrefixExpression() ast.Expression {
+	expression := &ast.PrefixExpression{
+		Token:    p.currentToken(),
+		Operator: p.currentToken().Lexeme,
+	}
+
+	p.advance() // Consume the operator (e.g., '-')
+	expression.Right = p.parseExpression(PREFIX)
+
+	return expression
+}
+
+// Parses infix expressions like 5 + 5 or x == y
+func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+	expression := &ast.InfixExpression{
+		Token:    p.currentToken(),
+		Operator: p.currentToken().Lexeme,
+		Left:     left,
+	}
+
+	precedence := p.currentPrecedence()
+	p.advance() // Consume the operator (e.g., '+')
+	expression.Right = p.parseExpression(precedence)
+
+	return expression
+}
+
+// Parses expressions grouped by parentheses
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.advance() // Consume the '('
+	exp := p.parseExpression(LOWEST)
+
+	if !p.check(token.CLOSE_PAREN) {
+		p.errorf("expected ')' but got %q at line %d", p.currentToken().Lexeme, p.currentToken().Line)
+		return nil
+	}
+	
+	p.advance() // Consume the ')'
+	return exp
 }
