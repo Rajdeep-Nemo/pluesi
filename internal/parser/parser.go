@@ -89,6 +89,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseLetStatement()
 	case token.CONST:
 		return p.parseConstStatement()
+	case token.IMPORT:
+		return p.parseImportStatement()
 	case token.IDENTIFIER:
 		if _, ok := assignOperators[p.peekToken().Type]; ok {
 			return p.parseAssignmentStatement()
@@ -241,6 +243,51 @@ func (p *Parser) parseAssignmentStatement() *ast.AssignStatement {
 	return &ast.AssignStatement{Token: opToken, Target: name, Operator: assignOp, Value: value}
 }
 
+// Parses an import statement: import "io"; OR import ("io", "math");
+func (p *Parser) parseImportStatement() *ast.ImportStatement {
+	stmt := &ast.ImportStatement{Token: p.currentToken()}
+	p.advance() // Consume the 'import' keyword
+
+	// Handle grouped imports: import ("io", "math")
+	if p.check(token.OPEN_PAREN) {
+		p.advance() // Consume '('
+
+		for !p.check(token.CLOSE_PAREN) && !p.check(token.END_OF_FILE) {
+			if !p.check(token.STRING_LITERAL) {
+				p.errorf("expected string literal in import, got %q at line %d", p.currentToken().Lexeme, p.currentToken().Line)
+				return nil
+			}
+
+			// Parse the string literal and cast it
+			strNode := p.parseStringLiteral().(*ast.StringLiteral)
+			stmt.Modules = append(stmt.Modules, strNode)
+
+			// If the next token is a comma, consume it so we can read the next string
+			if p.check(token.COMMA) {
+				p.advance()
+			}
+		}
+
+		if !p.check(token.CLOSE_PAREN) {
+			p.errorf("expected ')' after grouped imports at line %d", p.currentToken().Line)
+			return nil
+		}
+		p.advance() // Consume ')'
+	} else {
+		// Handle single import: import "io"
+		if !p.check(token.STRING_LITERAL) {
+			p.errorf("expected string literal after import at line %d", p.currentToken().Line)
+			return nil
+		}
+
+		strNode := p.parseStringLiteral().(*ast.StringLiteral)
+		stmt.Modules = append(stmt.Modules, strNode)
+	}
+
+	p.consumeSemicolon()
+	return stmt
+}
+
 // Parses an expression using Pratt parsing technique.
 func (p *Parser) parseExpression(precedence Precedence) ast.Expression {
 	// Fetch the prefix parse function based on the current token type
@@ -347,6 +394,7 @@ func (p *Parser) registerParseFns() {
 		token.GREATER_EQUAL: p.parseInfixExpression,
 		token.AND:           p.parseInfixExpression,
 		token.OR:            p.parseInfixExpression,
+		token.OPEN_PAREN:    p.parseCallExpression,
 	}
 }
 
@@ -463,4 +511,43 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 
 	p.advance() // Consume the ')'
 	return exp
+}
+
+// Parses a function call expression
+func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	exp := &ast.CallExpression{Token: p.currentToken(), Function: function}
+	exp.Arguments = p.parseCallArguments()
+	return exp
+}
+
+// Helper function to parse a comma-separated list of arguments
+func (p *Parser) parseCallArguments() []ast.Expression {
+	args := []ast.Expression{}
+
+	// If the next token is ')', there are no arguments: print()
+	if p.check(token.CLOSE_PAREN) {
+		p.advance() // Consume the ')'
+		return args
+	}
+
+	p.advance() // Move past the '('
+
+	// Parse the first argument
+	args = append(args, p.parseExpression(LOWEST))
+
+	// While there is a comma, keep parsing arguments
+	for p.check(token.COMMA) {
+		p.advance() // Consume the current token
+		p.advance() // Consume the comma
+		args = append(args, p.parseExpression(LOWEST))
+	}
+
+	// Enforce the closing parenthesis
+	if !p.check(token.CLOSE_PAREN) {
+		p.errorf("expected ')' but got %q at line %d", p.currentToken().Lexeme, p.currentToken().Line)
+		return nil
+	}
+
+	p.advance() // Consume the ')'
+	return args
 }

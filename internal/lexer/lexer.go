@@ -22,6 +22,7 @@ var keywords = map[string]token.TokenType{
 	"match":    token.MATCH,
 	"true":     token.TRUE,
 	"false":    token.FALSE,
+	"import":   token.IMPORT,
 	// Type keywords
 	"i8":     token.I8,
 	"i16":    token.I16,

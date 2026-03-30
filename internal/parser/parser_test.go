@@ -484,6 +484,73 @@ func TestMultipleStatements(t *testing.T) {
 	}
 }
 
+// Test import statements
+func TestImportStatement(t *testing.T) {
+	tests := []struct {
+		name            string
+		inputTokens     []token.Token
+		expectedModules []string
+	}{
+		{
+			name: "Single Import",
+			// import "io";
+			inputTokens: []token.Token{
+				{Type: token.IMPORT, Lexeme: "import"},
+				{Type: token.STRING_LITERAL, Lexeme: "\"io\""}, // Lexer includes quotes
+				{Type: token.SEMICOLON, Lexeme: ";"},
+				eof,
+			},
+			expectedModules: []string{"io"}, // Note: parseStringLiteral strips the quotes for the AST Value
+		},
+		{
+			name: "Grouped Imports",
+			// import ("io", "math");
+			inputTokens: []token.Token{
+				{Type: token.IMPORT, Lexeme: "import"},
+				{Type: token.OPEN_PAREN, Lexeme: "("},
+				{Type: token.STRING_LITERAL, Lexeme: "\"io\""},
+				{Type: token.COMMA, Lexeme: ","},
+				{Type: token.STRING_LITERAL, Lexeme: "\"math\""},
+				{Type: token.CLOSE_PAREN, Lexeme: ")"},
+				{Type: token.SEMICOLON, Lexeme: ";"},
+				eof,
+			},
+			expectedModules: []string{"io", "math"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p, program := makeProgram(tt.inputTokens)
+
+			// We shouldn't have any parsing errors
+			checkParserErrors(t, p)
+
+			// There should be exactly 1 statement parsed
+			checkStatementCount(t, program, 1)
+
+			// 1. Check if the statement is an ImportStatement
+			stmt, ok := program.Statements[0].(*ast.ImportStatement)
+			if !ok {
+				t.Fatalf("expected *ast.ImportStatement, got %T", program.Statements[0])
+			}
+
+			// 2. Check that the correct number of modules were parsed
+			if len(stmt.Modules) != len(tt.expectedModules) {
+				t.Fatalf("expected %d modules, got %d", len(tt.expectedModules), len(stmt.Modules))
+			}
+
+			// 3. Verify the names of the imported modules
+			for i, expected := range tt.expectedModules {
+				actual := stmt.Modules[i].Value
+				if actual != expected {
+					t.Errorf("expected module %q, got %q", expected, actual)
+				}
+			}
+		})
+	}
+}
+
 // Empty program — should parse fine with zero statements
 func TestEmptyProgram(t *testing.T) {
 	tokens := []token.Token{eof}

@@ -3,6 +3,7 @@ package ast
 import (
 	"bytes"
 	"pluesi/internal/token"
+	"strings"
 )
 
 // Node is the base interface for all nodes in the tree
@@ -118,6 +119,36 @@ func (ls *ConstStatement) String() string {
 	return out.String()
 }
 
+// ImportStatement represents an import directive: import "io" or import ("io", "math")
+type ImportStatement struct {
+	Token   token.Token      // The 'import' token
+	Modules []*StringLiteral // List of module names to import
+}
+
+func (is *ImportStatement) statementNode()       {}
+func (is *ImportStatement) TokenLiteral() string { return is.Token.Lexeme }
+
+func (is *ImportStatement) String() string {
+	var out bytes.Buffer
+	out.WriteString(is.TokenLiteral() + " ")
+
+	if len(is.Modules) > 1 {
+		out.WriteString("(")
+	}
+
+	var mods []string
+	for _, m := range is.Modules {
+		mods = append(mods, m.String())
+	}
+	out.WriteString(strings.Join(mods, ", "))
+
+	if len(is.Modules) > 1 {
+		out.WriteString(")")
+	}
+	out.WriteString(";")
+	return out.String()
+}
+
 // Holds the operator for assignment statements like "=", "+=", etc.
 type AssignOperator string
 
@@ -229,3 +260,24 @@ func (ie *InfixExpression) String() string {
 }
 func (ie *InfixExpression) expressionNode()      {}
 func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Lexeme }
+
+type CallExpression struct {
+	Token     token.Token  // The '(' token
+	Function  Expression   // The function being called (could be an identifier or a more complex expression)
+	Arguments []Expression // The arguments passed to the function
+}
+
+func (ce *CallExpression) expressionNode()      {}
+func (ce *CallExpression) TokenLiteral() string { return ce.Token.Lexeme }
+func (ce *CallExpression) String() string {
+	var out bytes.Buffer
+	var args []string
+	for _, a := range ce.Arguments {
+		args = append(args, a.String())
+	}
+	out.WriteString(ce.Function.String())
+	out.WriteString("(")
+	out.WriteString(strings.Join(args, ", "))
+	out.WriteString(")")
+	return out.String()
+}
