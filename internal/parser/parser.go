@@ -2,9 +2,9 @@ package parser
 
 import (
 	"fmt"
-	"strconv"
 	"pluesi/internal/ast"
 	"pluesi/internal/token"
+	"strconv"
 )
 
 // Parser struct to hold the tokens and current position
@@ -174,7 +174,7 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 func (p *Parser) parseConstStatement() *ast.ConstStatement {
 	// Consume const token
 	constToken := p.advance()
-	
+
 	// Expect and consume identifier
 	nameToken, ok := p.expect(token.IDENTIFIER)
 	if !ok {
@@ -196,11 +196,11 @@ func (p *Parser) parseConstStatement() *ast.ConstStatement {
 		return nil
 	}
 	p.advance() // Consume '='
-	
+
 	// 3. Parse the value expression
 	value := p.parseExpression(LOWEST)
 	p.consumeSemicolon()
-	
+
 	return &ast.ConstStatement{Token: constToken, Name: name, TypeHint: typeHint, Value: value}
 }
 
@@ -387,7 +387,7 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 	if len(lexeme) >= 2 && lexeme[0] == '"' && lexeme[len(lexeme)-1] == '"' {
 		value = lexeme[1 : len(lexeme)-1] // Strip the " quotes
 	}
-	
+
 	lit := &ast.StringLiteral{Token: p.currentToken(), Value: value}
 	p.advance()
 	return lit
@@ -410,7 +410,7 @@ func (p *Parser) parseCharLiteral() ast.Expression {
 	if len(lexeme) >= 3 {
 		val = rune(lexeme[1])
 	}
-	
+
 	lit := &ast.CharLiteral{Token: p.currentToken(), Value: val}
 	p.advance()
 	return lit
@@ -460,7 +460,7 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 		p.errorf("expected ')' but got %q at line %d", p.currentToken().Lexeme, p.currentToken().Line)
 		return nil
 	}
-	
+
 	p.advance() // Consume the ')'
 	return exp
 }
