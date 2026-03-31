@@ -2,25 +2,16 @@ package evaluator
 
 import (
 	"fmt"
-	"pluesi/internal/object"
+	"glaze/internal/object"
 )
 
-// builtins is the central registry of all native Pluesi functions written in Go.
-// Because this is in the "evaluator" package, evaluator.go can read it automatically!
+// builtins is the central registry of all native functions.
+// The string keys to the separate logic functions defined in other files.
 var builtins = map[string]*object.Builtin{
-	
-	// print() - Prints any number of arguments to the console
-	"print": {
-		Fn: func(args ...object.Object) object.Object {
-			for _, arg := range args {
-				fmt.Print(arg.Inspect(), " ")
-			}
-			fmt.Println()
-			return &object.Nil{} // Pluesi functions must always return an Object!
-		},
-	},
+	"print":   {Fn: builtinPrint},
+	"println": {Fn: builtinPrintln},
 
-	// len() - Returns the length of a string
+	// We can leave 'len' here for now, or you can move it to a builtin_string.go later!
 	"len": {
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
