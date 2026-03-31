@@ -149,28 +149,23 @@ func (p *Parser) parseLetStatement() ast.Statement {
 
 		stmt.TypeHint = p.parseTypeAnnotation()
 		if stmt.TypeHint == nil {
-			return nil
+			return nil 
 		}
 	}
 
-	// BUG FIX: If there is no Type Hint, there MUST be an equals sign!
-	if stmt.TypeHint == nil && p.currentToken().Type == token.END_OF_FILE {
-		p.expect(token.EQUAL)
-		return nil
+	// 3. Handle Initialization vs Uninitialized
+	if p.currentToken().Type == token.EQUAL {
+		p.advance() // Move past the '='
+		
+		// Parse the right side of the equals sign
+		stmt.Value = p.parseExpression(LOWEST)
+	} else {
+		// If there is NO equals sign, there MUST be a type hint (e.g., `let a;` is invalid)
+		if stmt.TypeHint == nil {
+			p.errorf("expected '=' after identifier without type hint at line %d", p.currentToken().Line)
+			return nil
+		}
 	}
-
-	// Handle VALID uninitialized variables
-	if p.currentToken().Type == token.END_OF_FILE {
-		return stmt
-	}
-
-	// 4. Expect the Equals sign if it IS initialized
-	if _, ok := p.expect(token.EQUAL); !ok {
-		return nil
-	}
-
-	// 5. Parse the right side of the equals sign
-	stmt.Value = p.parseExpression(LOWEST)
 
 	return stmt
 }

@@ -43,22 +43,22 @@ func TestVariablesAndStrictTyping(t *testing.T) {
 		expected interface{} // Can be an int, string, or an Error message substring
 	}{
 		// --- Success Cases ---
-		{"let a = 5; a;", int64(5)},
-		{"let a: i32 = 10; a;", int64(10)},
-		{"let a = 5; let b = a; b;", int64(5)},
-		{"let a = 5; a = 10; a;", int64(10)},
-		{"let a = 10; a += 5; a;", int64(15)},
-		{"const PI = 3; PI;", int64(3)},
+		{"let a = 5\na", int64(5)},
+		{"let a: i32 = 10\na", int64(10)},
+		{"let a = 5\nlet b = a\nb", int64(5)},
+		{"let a = 5\na = 10\na", int64(10)},
+		{"let a = 10\na += 5\na", int64(15)},
+		{"const PI: i64 = 3\nPI", int32(3)},
 
 		// --- Uninitialized Defaults ---
-		{"let empty: string; empty;", nil}, // Should be NIL object
+		{"let empty: string\nempty", nil}, // Should be NIL object
 
 		// --- Error Cases (Should Fail Fast!) ---
-		{"let a: string = 5;", "type mismatch"},
-		{"let a = 5; a = \"hello\";", "type mismatch"},
-		{"const a = 5; a = 10;", "cannot reassign to const variable"},
-		{"let empty: i32; empty += 5;", "type mismatch"}, // Math on NIL should crash
-		{"unknownVar = 10;", "cannot assign to undefined variable"},
+		{"let a: string = 5", "type mismatch"},
+		{"let a = 5\na = \"hello\"", "type mismatch"},
+		{"const a: i32 = 5\na = 10", "cannot reassign to const variable"},
+		{"let empty: i32\nempty += 5", "type mismatch"}, // Math on NIL should crash
+		{"unknownVar = 10", "cannot assign to undefined variable"},
 	}
 
 	for _, tt := range tests {
@@ -106,16 +106,19 @@ func TestBuiltinPrintFormatting(t *testing.T) {
 		expectedError  string
 	}{
 		// --- Success Cases ---
-		{`print("Hello");`, "Hello", ""},
-		{`println("Hello " + "World");`, "Hello World\n", ""},
-		{`let age = 25; print("Age: {i32}", age);`, "Age: 25", ""},
-		{`let n = "Pluesi"; let v = 1; println("Lang: {string}, Ver: {i32}", n, v);`, "Lang: Pluesi, Ver: 1\n", ""},
+		{`print("Hello")`, "Hello", ""},
+		{`println("Hello " + "World")`, "Hello World\n", ""},
+		{`let age = 25
+print("Age: {i32}", age)`, "Age: 25", ""},
+		{`let n = "Pluesi"
+let v = 1
+println("Lang: {string}, Ver: {i32}", n, v)`, "Lang: Pluesi, Ver: 1\n", ""},
 
 		// --- Error Cases (Format Engine) ---
-		{`print("Age: {i32}", "twenty");`, "", "type mismatch in print"},
-		{`print("Score: {f64}", 100);`, "", "type mismatch in print"}, // strict float vs int check!
-		{`print("Name: {string} {string}", "Pluesi");`, "", "not enough arguments"},
-		{`print("Name: {string}", "Pluesi", "Extra");`, "", "too many arguments"},
+		{`print("Age: {i32}", "twenty")`, "", "type mismatch in print"},
+		{`print("Score: {f64}", 100)`, "", "type mismatch in print"}, // strict float vs int check!
+		{`print("Name: {string} {string}", "Pluesi")`, "", "not enough arguments"},
+		{`print("Name: {string}", "Pluesi", "Extra")`, "", "too many arguments"},
 	}
 
 	for _, tt := range tests {
@@ -172,26 +175,26 @@ func TestIfElseAndBlockScoping(t *testing.T) {
 
 		// --- SCOPING: Mutating Outer Variables ---
 		{`
-			let x = 10;
-			if (true) { x = 20; }
-			x;
-		`, int64(20)}, // The outer x should be updated
+            let x = 10
+            if (true) { x = 20 }
+            x
+        `, int64(20)}, // The outer x should be updated
 
 		// --- SCOPING: Shadowing (Local variables don't leak) ---
 		{`
-			let x = 10;
-			if (true) { let x = 50; }
-			x;
-		`, int64(10)}, // Outer x is untouched because 'let' created a local block variable
+            let x = 10
+            if (true) { let x = 50 }
+            x
+        `, int64(10)}, // Outer x is untouched because 'let' created a local block variable
 
 		// --- Nested Blocks ---
 		{`
-			if (true) {
-				if (true) {
-					100
-				}
-			}
-		`, int64(100)},
+            if (true) {
+                if (true) {
+                    100
+                }
+            }
+        `, int64(100)},
 	}
 
 	for _, tt := range tests {
