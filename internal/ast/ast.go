@@ -2,7 +2,7 @@ package ast
 
 import (
 	"bytes"
-	"glaze/internal/token"
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/token"
 	"strings"
 )
 

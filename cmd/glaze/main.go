@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"glaze/internal/evaluator"
-	"glaze/internal/lexer"
-	"glaze/internal/object"
-	"glaze/internal/parser"
-	"glaze/internal/token"
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/evaluator"
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/lexer"
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/object"
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/parser"
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/token"
 	"os"
 )
 

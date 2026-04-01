@@ -2,7 +2,7 @@
 package lexer
 
 import (
-	"glaze/internal/token"
+	"github.com/Rajdeep-Nemo/sugarglaze/internal/token"
 	"testing"
 )
 
