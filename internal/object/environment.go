@@ -9,6 +9,7 @@ type Record struct {
 	Type          string
 	IsInitialized bool
 }
+
 // Environment is a map of strings to Records, with a pointer to an outer scope
 type Environment struct {
 	store map[string]Record
@@ -19,12 +20,14 @@ type Environment struct {
 func NewEnvironment() *Environment {
 	return &Environment{store: make(map[string]Record), outer: nil}
 }
+
 // NewEnclosedEnvironment creates a new local scope (e.g., for a function or if-block)
 func NewEnclosedEnvironment(outer *Environment) *Environment {
 	env := NewEnvironment()
 	env.outer = outer
 	return env
 }
+
 // Looks up a variable by name. It checks the local scope first, then walks up the outer scopes.
 func (e *Environment) Get(name string) (Record, bool) {
 	record, ok := e.store[name]
@@ -56,7 +59,7 @@ func (e *Environment) Assign(name string, val Object) Object {
 	}
 
 	if record.Type != "" && record.Type != string(val.Type()) {
-		return &Error{Message: fmt.Sprintf("type mismatch: cannot assign '%s' to variable '%s' (expected '%s')", 
+		return &Error{Message: fmt.Sprintf("type mismatch: cannot assign '%s' to variable '%s' (expected '%s')",
 			val.Type(), name, record.Type)}
 	}
 

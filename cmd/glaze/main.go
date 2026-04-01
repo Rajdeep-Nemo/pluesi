@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"glaze/internal/evaluator"
 	"glaze/internal/lexer"
 	"glaze/internal/object"
 	"glaze/internal/parser"
 	"glaze/internal/token"
+	"os"
 )
 
 func main() {

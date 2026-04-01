@@ -217,16 +217,16 @@ func TestLetAllTypeKeywords(t *testing.T) {
 
 // const MAX = 100  (missing type — invalid, must error)
 func TestConstMissingType(t *testing.T) {
-    tokens := []token.Token{
-        {Type: token.CONST, Lexeme: "const"},
-        {Type: token.IDENTIFIER, Lexeme: "MAX"},
-        {Type: token.EQUAL, Lexeme: "="},
-        {Type: token.INT_LITERAL, Lexeme: "100"},
-        eof,
-    }
+	tokens := []token.Token{
+		{Type: token.CONST, Lexeme: "const"},
+		{Type: token.IDENTIFIER, Lexeme: "MAX"},
+		{Type: token.EQUAL, Lexeme: "="},
+		{Type: token.INT_LITERAL, Lexeme: "100"},
+		eof,
+	}
 
-    p, _ := makeProgram(tokens)
-    expectParserErrors(t, p, 2) // We expect this to fail now!
+	p, _ := makeProgram(tokens)
+	expectParserErrors(t, p, 2) // We expect this to fail now!
 }
 
 // const MAX: i32 = 100  (explicit type, initialized)
