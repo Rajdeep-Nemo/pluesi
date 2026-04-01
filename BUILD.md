@@ -18,14 +18,14 @@ cd sugarglaze
 
 ```bash
 # Build the project
-go build ./...
+go build ./cmd/glaze
 ```
 
 ## Run
 
 ```bash
 # Run the compiled binary
-./Sugarglaze
+./glaze
 ```
 
 ## Tests
