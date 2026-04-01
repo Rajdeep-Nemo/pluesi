@@ -2,8 +2,7 @@
 
 Thanks for taking the time to contribute.
 
-> [!TIP]
-> ### 🌿 Branching Strategy
+> ## Branching Strategy
 > To keep the project stable, we use two main branches:
 > - **`main`**: Contains stable, bug-free code that passes all tests.
 > - **`dev`**: Used for active development and testing.
