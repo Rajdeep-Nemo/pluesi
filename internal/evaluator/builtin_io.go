@@ -1,7 +1,9 @@
 package evaluator
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/Rajdeep-Nemo/sugarglaze/internal/object"
@@ -97,4 +99,20 @@ func builtinPrintln(args ...object.Object) object.Object {
 // Trims leading and trailing whitespace from a string
 func trim(s string) string {
 	return strings.TrimSpace(s)
+}
+
+// A shared buffered reader for os.Stdin.
+var reader = bufio.NewReader(os.Stdin)
+
+// InputStr reads a line from stdin with an optional prompt.
+func InputStr(prompt string) string {
+	if prompt != "" {
+		fmt.Print(prompt)
+	}
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to read input.")
+		os.Exit(1)
+	}
+	return strings.TrimRight(line, "\r\n")
 }
