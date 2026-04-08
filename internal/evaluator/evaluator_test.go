@@ -349,3 +349,203 @@ func TestParseChar_Empty(t *testing.T) {
 		t.Errorf("Expected nil, got %v", *v)
 	}
 }
+
+// ParseU8 Tests
+func TestParseU8_Valid(t *testing.T) {
+	v := ParseU8("255")
+	if v == nil || *v != 255 {
+		t.Errorf("Expected 255, got %v", v)
+	}
+}
+
+func TestParseU8_Zero(t *testing.T) {
+	v := ParseU8("0")
+	if v == nil || *v != 0 {
+		t.Errorf("Expected 0, got %v", v)
+	}
+}
+
+func TestParseU8_Trimmed(t *testing.T) {
+	v := ParseU8("  42  ")
+	if v == nil || *v != 42 {
+		t.Errorf("Expected 42 after trim, got %v", v)
+	}
+}
+
+func TestParseU8_Overflow(t *testing.T) {
+	v := ParseU8("256")
+	if v != nil {
+		t.Errorf("Expected nil on overflow, got %v", *v)
+	}
+}
+
+func TestParseU8_Negative(t *testing.T) {
+	v := ParseU8("-1")
+	if v != nil {
+		t.Errorf("Expected nil on negative, got %v", *v)
+	}
+}
+
+func TestParseU8_Partial(t *testing.T) {
+	v := ParseU8("123abc")
+	if v != nil {
+		t.Errorf("Expected nil on partial parse, got %v", *v)
+	}
+}
+
+func TestParseU8_Empty(t *testing.T) {
+	v := ParseU8("")
+	if v != nil {
+		t.Errorf("Expected nil on empty, got %v", *v)
+	}
+}
+
+// ParseU16 Tests
+func TestParseU16_Valid(t *testing.T) {
+	v := ParseU16("65535")
+	if v == nil || *v != 65535 {
+		t.Errorf("Expected 65535, got %v", v)
+	}
+}
+
+func TestParseU16_Zero(t *testing.T) {
+	v := ParseU16("0")
+	if v == nil || *v != 0 {
+		t.Errorf("Expected 0, got %v", v)
+	}
+}
+
+func TestParseU16_Trimmed(t *testing.T) {
+	v := ParseU16("  100  ")
+	if v == nil || *v != 100 {
+		t.Errorf("Expected 100 after trim, got %v", v)
+	}
+}
+
+func TestParseU16_Overflow(t *testing.T) {
+	v := ParseU16("65536")
+	if v != nil {
+		t.Errorf("Expected nil on overflow, got %v", *v)
+	}
+}
+
+func TestParseU16_Negative(t *testing.T) {
+	v := ParseU16("-1")
+	if v != nil {
+		t.Errorf("Expected nil on negative, got %v", *v)
+	}
+}
+
+func TestParseU16_Partial(t *testing.T) {
+	v := ParseU16("123abc")
+	if v != nil {
+		t.Errorf("Expected nil on partial parse, got %v", *v)
+	}
+}
+
+func TestParseU16_Empty(t *testing.T) {
+	v := ParseU16("")
+	if v != nil {
+		t.Errorf("Expected nil on empty, got %v", *v)
+	}
+}
+
+// ParseU32 Tests
+func TestParseU32_Valid(t *testing.T) {
+	v := ParseU32("4294967295")
+	if v == nil || *v != 4294967295 {
+		t.Errorf("Expected 4294967295, got %v", v)
+	}
+}
+
+func TestParseU32_Zero(t *testing.T) {
+	v := ParseU32("0")
+	if v == nil || *v != 0 {
+		t.Errorf("Expected 0, got %v", v)
+	}
+}
+
+func TestParseU32_Trimmed(t *testing.T) {
+	v := ParseU32("  100  ")
+	if v == nil || *v != 100 {
+		t.Errorf("Expected 100 after trim, got %v", v)
+	}
+}
+
+func TestParseU32_Overflow(t *testing.T) {
+	v := ParseU32("4294967296")
+	if v != nil {
+		t.Errorf("Expected nil on overflow, got %v", *v)
+	}
+}
+
+func TestParseU32_Negative(t *testing.T) {
+	v := ParseU32("-1")
+	if v != nil {
+		t.Errorf("Expected nil on negative, got %v", *v)
+	}
+}
+
+func TestParseU32_Partial(t *testing.T) {
+	v := ParseU32("123abc")
+	if v != nil {
+		t.Errorf("Expected nil on partial parse, got %v", *v)
+	}
+}
+
+func TestParseU32_Empty(t *testing.T) {
+	v := ParseU32("")
+	if v != nil {
+		t.Errorf("Expected nil on empty, got %v", *v)
+	}
+}
+
+// ParseU64 Tests
+func TestParseU64_Valid(t *testing.T) {
+	v := ParseU64("18446744073709551615")
+	if v == nil || *v != 18446744073709551615 {
+		t.Errorf("Expected 18446744073709551615, got %v", v)
+	}
+}
+
+func TestParseU64_Zero(t *testing.T) {
+	v := ParseU64("0")
+	if v == nil || *v != 0 {
+		t.Errorf("Expected 0, got %v", v)
+	}
+}
+
+func TestParseU64_Trimmed(t *testing.T) {
+	v := ParseU64("  100  ")
+	if v == nil || *v != 100 {
+		t.Errorf("Expected 100 after trim, got %v", v)
+	}
+}
+
+func TestParseU64_Overflow(t *testing.T) {
+	v := ParseU64("18446744073709551616")
+	if v != nil {
+		t.Errorf("Expected nil on overflow, got %v", *v)
+	}
+}
+
+func TestParseU64_Negative(t *testing.T) {
+	v := ParseU64("-1")
+	if v != nil {
+		t.Errorf("Expected nil on negative, got %v", *v)
+	}
+}
+
+func TestParseU64_Partial(t *testing.T) {
+	v := ParseU64("123abc")
+	if v != nil {
+		t.Errorf("Expected nil on partial parse, got %v", *v)
+	}
+}
+
+func TestParseU64_Empty(t *testing.T) {
+	v := ParseU64("")
+	if v != nil {
+		t.Errorf("Expected nil on empty, got %v", *v)
+	}
+}
