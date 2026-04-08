@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/Rajdeep-Nemo/sugarglaze/internal/object"
@@ -170,5 +171,36 @@ func MustParseChar(s string) byte {
 		os.Exit(1)
 	}
 	v := ParseChar(s)
+	return *v
+}
+
+// ParseU8 parses a string to an 8-bit unsigned integer.
+// Returns nil if parsing fails.
+func ParseU8(s string) *uint8 {
+	s = trim(s)
+	if s == "" {
+		return nil
+	}
+	v, err := strconv.ParseUint(s, 10, 8)
+	if err != nil {
+		return nil
+	}
+	val := uint8(v)
+	return &val
+}
+
+// MustParseU8 parses a string to an 8-bit unsigned integer.
+// Exits with an error message if parsing fails.
+func MustParseU8(s string) uint8 {
+	s = trim(s)
+	if s == "" {
+		fmt.Fprintln(os.Stderr, "Empty input.")
+		os.Exit(1)
+	}
+	v := ParseU8(s)
+	if v == nil {
+		fmt.Fprintf(os.Stderr, "Invalid input: '%s' is not a valid 8-bit unsigned integer.\n", s)
+		os.Exit(1)
+	}
 	return *v
 }
