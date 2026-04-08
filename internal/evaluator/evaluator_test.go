@@ -284,3 +284,68 @@ func testFloatObject(t *testing.T, obj object.Object, expected float64, expected
 
 	return true
 }
+
+// ParseBool Tests
+func TestParseBool_True(t *testing.T) {
+	v := ParseBool("true")
+	if v == nil || *v != true {
+		t.Errorf("Expected true, got %v", v)
+	}
+}
+
+func TestParseBool_False(t *testing.T) {
+	v := ParseBool("false")
+	if v == nil || *v != false {
+		t.Errorf("Expected false, got %v", v)
+	}
+}
+
+func TestParseBool_Trimmed(t *testing.T) {
+	v := ParseBool("  true  ")
+	if v == nil || *v != true {
+		t.Errorf("Expected true after trim, got %v", v)
+	}
+}
+
+func TestParseBool_Invalid(t *testing.T) {
+	v := ParseBool("invalid")
+	if v != nil {
+		t.Errorf("Expected nil, got %v", *v)
+	}
+}
+
+func TestParseBool_Empty(t *testing.T) {
+	v := ParseBool("")
+	if v != nil {
+		t.Errorf("Expected nil, got %v", *v)
+	}
+}
+
+// ParseChar Tests
+func TestParseChar_Valid(t *testing.T) {
+	v := ParseChar("a")
+	if v == nil || *v != 'a' {
+		t.Errorf("Expected 'a', got %v", v)
+	}
+}
+
+func TestParseChar_Trimmed(t *testing.T) {
+	v := ParseChar("  a  ")
+	if v == nil || *v != 'a' {
+		t.Errorf("Expected 'a' after trim, got %v", v)
+	}
+}
+
+func TestParseChar_Multiple(t *testing.T) {
+	v := ParseChar("ab")
+	if v != nil {
+		t.Errorf("Expected nil, got %v", *v)
+	}
+}
+
+func TestParseChar_Empty(t *testing.T) {
+	v := ParseChar("")
+	if v != nil {
+		t.Errorf("Expected nil, got %v", *v)
+	}
+}
