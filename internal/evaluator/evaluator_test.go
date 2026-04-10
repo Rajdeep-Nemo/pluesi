@@ -549,3 +549,231 @@ func TestParseU64_Empty(t *testing.T) {
 		t.Errorf("Expected nil on empty, got %v", *v)
 	}
 }
+
+// ParseI8 Tests
+func TestParseI8_Valid(t *testing.T) {
+	v := ParseI8("127")
+	if v == nil || *v != 127 {
+		t.Errorf("Expected 127, got %v", v)
+	}
+}
+
+func TestParseI8_Negative(t *testing.T) {
+	v := ParseI8("-128")
+	if v == nil || *v != -128 {
+		t.Errorf("Expected -128, got %v", v)
+	}
+}
+
+func TestParseI8_Zero(t *testing.T) {
+	v := ParseI8("0")
+	if v == nil || *v != 0 {
+		t.Errorf("Expected 0, got %v", v)
+	}
+}
+
+func TestParseI8_Trimmed(t *testing.T) {
+	v := ParseI8("  42  ")
+	if v == nil || *v != 42 {
+		t.Errorf("Expected 42 after trim, got %v", v)
+	}
+}
+
+func TestParseI8_Overflow(t *testing.T) {
+	v := ParseI8("128")
+	if v != nil {
+		t.Errorf("Expected nil on overflow, got %v", *v)
+	}
+}
+
+func TestParseI8_Underflow(t *testing.T) {
+	v := ParseI8("-129")
+	if v != nil {
+		t.Errorf("Expected nil on underflow, got %v", *v)
+	}
+}
+
+func TestParseI8_Partial(t *testing.T) {
+	v := ParseI8("12abc")
+	if v != nil {
+		t.Errorf("Expected nil on partial parse, got %v", *v)
+	}
+}
+
+func TestParseI8_Empty(t *testing.T) {
+	v := ParseI8("")
+	if v != nil {
+		t.Errorf("Expected nil on empty, got %v", *v)
+	}
+}
+
+// ParseI16 Tests
+func TestParseI16_Valid(t *testing.T) {
+	v := ParseI16("32767")
+	if v == nil || *v != 32767 {
+		t.Errorf("Expected 32767, got %v", v)
+	}
+}
+
+func TestParseI16_Negative(t *testing.T) {
+	v := ParseI16("-32768")
+	if v == nil || *v != -32768 {
+		t.Errorf("Expected -32768, got %v", v)
+	}
+}
+
+func TestParseI16_Zero(t *testing.T) {
+	v := ParseI16("0")
+	if v == nil || *v != 0 {
+		t.Errorf("Expected 0, got %v", v)
+	}
+}
+
+func TestParseI16_Trimmed(t *testing.T) {
+	v := ParseI16("  100  ")
+	if v == nil || *v != 100 {
+		t.Errorf("Expected 100 after trim, got %v", v)
+	}
+}
+
+func TestParseI16_Overflow(t *testing.T) {
+	v := ParseI16("32768")
+	if v != nil {
+		t.Errorf("Expected nil on overflow, got %v", *v)
+	}
+}
+
+func TestParseI16_Underflow(t *testing.T) {
+	v := ParseI16("-32769")
+	if v != nil {
+		t.Errorf("Expected nil on underflow, got %v", *v)
+	}
+}
+
+func TestParseI16_Partial(t *testing.T) {
+	v := ParseI16("12abc")
+	if v != nil {
+		t.Errorf("Expected nil on partial parse, got %v", *v)
+	}
+}
+
+func TestParseI16_Empty(t *testing.T) {
+	v := ParseI16("")
+	if v != nil {
+		t.Errorf("Expected nil on empty, got %v", *v)
+	}
+}
+
+// ParseI32 Tests
+func TestParseI32_Valid(t *testing.T) {
+	v := ParseI32("2147483647")
+	if v == nil || *v != 2147483647 {
+		t.Errorf("Expected 2147483647, got %v", v)
+	}
+}
+
+func TestParseI32_Negative(t *testing.T) {
+	v := ParseI32("-2147483648")
+	if v == nil || *v != -2147483648 {
+		t.Errorf("Expected -2147483648, got %v", v)
+	}
+}
+
+func TestParseI32_Zero(t *testing.T) {
+	v := ParseI32("0")
+	if v == nil || *v != 0 {
+		t.Errorf("Expected 0, got %v", v)
+	}
+}
+
+func TestParseI32_Trimmed(t *testing.T) {
+	v := ParseI32("  100  ")
+	if v == nil || *v != 100 {
+		t.Errorf("Expected 100 after trim, got %v", v)
+	}
+}
+
+func TestParseI32_Overflow(t *testing.T) {
+	v := ParseI32("2147483648")
+	if v != nil {
+		t.Errorf("Expected nil on overflow, got %v", *v)
+	}
+}
+
+func TestParseI32_Underflow(t *testing.T) {
+	v := ParseI32("-2147483649")
+	if v != nil {
+		t.Errorf("Expected nil on underflow, got %v", *v)
+	}
+}
+
+func TestParseI32_Partial(t *testing.T) {
+	v := ParseI32("12abc")
+	if v != nil {
+		t.Errorf("Expected nil on partial parse, got %v", *v)
+	}
+}
+
+func TestParseI32_Empty(t *testing.T) {
+	v := ParseI32("")
+	if v != nil {
+		t.Errorf("Expected nil on empty, got %v", *v)
+	}
+}
+
+// ParseI64 Tests
+func TestParseI64_Valid(t *testing.T) {
+	v := ParseI64("9223372036854775807")
+	if v == nil || *v != 9223372036854775807 {
+		t.Errorf("Expected 9223372036854775807, got %v", v)
+	}
+}
+
+func TestParseI64_Negative(t *testing.T) {
+	v := ParseI64("-9223372036854775808")
+	if v == nil || *v != -9223372036854775808 {
+		t.Errorf("Expected -9223372036854775808, got %v", v)
+	}
+}
+
+func TestParseI64_Zero(t *testing.T) {
+	v := ParseI64("0")
+	if v == nil || *v != 0 {
+		t.Errorf("Expected 0, got %v", v)
+	}
+}
+
+func TestParseI64_Trimmed(t *testing.T) {
+	v := ParseI64("  100  ")
+	if v == nil || *v != 100 {
+		t.Errorf("Expected 100 after trim, got %v", v)
+	}
+}
+
+func TestParseI64_Overflow(t *testing.T) {
+	v := ParseI64("9223372036854775808")
+	if v != nil {
+		t.Errorf("Expected nil on overflow, got %v", *v)
+	}
+}
+
+func TestParseI64_Underflow(t *testing.T) {
+	v := ParseI64("-9223372036854775809")
+	if v != nil {
+		t.Errorf("Expected nil on underflow, got %v", *v)
+	}
+}
+
+func TestParseI64_Partial(t *testing.T) {
+	v := ParseI64("12abc")
+	if v != nil {
+		t.Errorf("Expected nil on partial parse, got %v", *v)
+	}
+}
+
+func TestParseI64_Empty(t *testing.T) {
+	v := ParseI64("")
+	if v != nil {
+		t.Errorf("Expected nil on empty, got %v", *v)
+	}
+}
