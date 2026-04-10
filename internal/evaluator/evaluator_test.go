@@ -777,3 +777,117 @@ func TestParseI64_Empty(t *testing.T) {
 		t.Errorf("Expected nil on empty, got %v", *v)
 	}
 }
+
+// ParseF32 Tests
+func TestParseF32_Valid(t *testing.T) {
+	v := ParseF32("3.14")
+	if v == nil || *v != float32(3.14) {
+		t.Errorf("Expected 3.14, got %v", v)
+	}
+}
+
+func TestParseF32_Negative(t *testing.T) {
+	v := ParseF32("-3.14")
+	if v == nil || *v != float32(-3.14) {
+		t.Errorf("Expected -3.14, got %v", v)
+	}
+}
+
+func TestParseF32_Zero(t *testing.T) {
+	v := ParseF32("0")
+	if v == nil || *v != 0 {
+		t.Errorf("Expected 0, got %v", v)
+	}
+}
+
+func TestParseF32_Trimmed(t *testing.T) {
+	v := ParseF32("  3.14  ")
+	if v == nil || *v != float32(3.14) {
+		t.Errorf("Expected 3.14 after trim, got %v", v)
+	}
+}
+
+func TestParseF32_Overflow(t *testing.T) {
+	v := ParseF32("3.4028235e+39")
+	if v != nil {
+		t.Errorf("Expected nil on overflow, got %v", *v)
+	}
+}
+
+func TestParseF32_Partial(t *testing.T) {
+	v := ParseF32("3.14abc")
+	if v != nil {
+		t.Errorf("Expected nil on partial parse, got %v", *v)
+	}
+}
+
+func TestParseF32_Empty(t *testing.T) {
+	v := ParseF32("")
+	if v != nil {
+		t.Errorf("Expected nil on empty, got %v", *v)
+	}
+}
+
+func TestParseF32_Integer(t *testing.T) {
+	v := ParseF32("42")
+	if v == nil || *v != float32(42) {
+		t.Errorf("Expected 42, got %v", v)
+	}
+}
+
+// ParseF64 Tests
+func TestParseF64_Valid(t *testing.T) {
+	v := ParseF64("3.141592653589793")
+	if v == nil || *v != 3.141592653589793 {
+		t.Errorf("Expected 3.141592653589793, got %v", v)
+	}
+}
+
+func TestParseF64_Negative(t *testing.T) {
+	v := ParseF64("-3.141592653589793")
+	if v == nil || *v != -3.141592653589793 {
+		t.Errorf("Expected -3.141592653589793, got %v", v)
+	}
+}
+
+func TestParseF64_Zero(t *testing.T) {
+	v := ParseF64("0")
+	if v == nil || *v != 0 {
+		t.Errorf("Expected 0, got %v", v)
+	}
+}
+
+func TestParseF64_Trimmed(t *testing.T) {
+	v := ParseF64("  3.14  ")
+	if v == nil || *v != 3.14 {
+		t.Errorf("Expected 3.14 after trim, got %v", v)
+	}
+}
+
+func TestParseF64_Overflow(t *testing.T) {
+	v := ParseF64("1.7976931348623157e+309")
+	if v != nil {
+		t.Errorf("Expected nil on overflow, got %v", *v)
+	}
+}
+
+func TestParseF64_Partial(t *testing.T) {
+	v := ParseF64("3.14abc")
+	if v != nil {
+		t.Errorf("Expected nil on partial parse, got %v", *v)
+	}
+}
+
+func TestParseF64_Empty(t *testing.T) {
+	v := ParseF64("")
+	if v != nil {
+		t.Errorf("Expected nil on empty, got %v", *v)
+	}
+}
+
+func TestParseF64_Integer(t *testing.T) {
+	v := ParseF64("42")
+	if v == nil || *v != 42 {
+		t.Errorf("Expected 42, got %v", v)
+	}
+}
