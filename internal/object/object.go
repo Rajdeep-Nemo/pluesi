@@ -1,4 +1,3 @@
-// internal/object/object.go
 package object
 
 import "fmt"
