@@ -891,3 +891,124 @@ func TestParseF64_Integer(t *testing.T) {
 		t.Errorf("Expected 42, got %v", v)
 	}
 }
+func TestBuiltinParse(t *testing.T) {
+	tests := []struct {
+		input        string
+		expectedType object.ObjectType
+		expectedVal  any
+	}{
+		// Success cases - Booleans
+		{`parse("bool", "true")`, object.BOOL_OBJ, true},
+		{`parse("bool", "false")`, object.BOOL_OBJ, false},
+		{`parse("bool", "  true  ")`, object.BOOL_OBJ, true},
+
+		// Success cases - Chars
+		{`parse("char", "a")`, object.CHAR_OBJ, 'a'},
+		{`parse("char", "Z")`, object.CHAR_OBJ, 'Z'},
+
+		// Success cases - Unsigned Integers
+		{`parse("u8", "255")`, object.U8_OBJ, uint8(255)},
+		{`parse("u16", "65535")`, object.U16_OBJ, uint16(65535)},
+		{`parse("u32", "4294967295")`, object.U32_OBJ, uint32(4294967295)},
+		{`parse("u64", "18446744073709551615")`, object.U64_OBJ, uint64(18446744073709551615)},
+
+		// Success cases - Signed Integers
+		{`parse("i8", "-128")`, object.I8_OBJ, int8(-128)},
+		{`parse("i16", "-32768")`, object.I16_OBJ, int16(-32768)},
+		{`parse("i32", "-2147483648")`, object.I32_OBJ, int32(-2147483648)},
+		{`parse("i64", "-9223372036854775808")`, object.I64_OBJ, int64(-9223372036854775808)},
+
+		// Success cases - Floats
+		{`parse("f32", "3.14")`, object.F32_OBJ, float32(3.14)},
+		{`parse("f64", "-3.14159265")`, object.F64_OBJ, float64(-3.14159265)},
+
+		// Failure cases returning NIL (parsing failed)
+		{`parse("bool", "notabool")`, object.NIL_OBJ, nil},
+		{`parse("char", "abc")`, object.NIL_OBJ, nil},
+		{`parse("char", "")`, object.NIL_OBJ, nil},
+		{`parse("u8", "256")`, object.NIL_OBJ, nil},  // overflow
+		{`parse("u8", "-1")`, object.NIL_OBJ, nil},   // negative for unsigned
+		{`parse("i32", "abc")`, object.NIL_OBJ, nil}, // invalid string
+		{`parse("f64", "invalid")`, object.NIL_OBJ, nil},
+
+		// Runtime Error cases
+		{`parse()`, object.ERROR_OBJ, "expected 2 arguments for parse(), got 0"},
+		{`parse("bool")`, object.ERROR_OBJ, "expected 2 arguments for parse(), got 1"},
+		{`parse("bool", "true", "extra")`, object.ERROR_OBJ, "expected 2 arguments for parse(), got 3"},
+		{`parse(123, "true")`, object.ERROR_OBJ, "expected a type as the first argument, got value of 'i32'"},
+		{`parse("bool", 123)`, object.ERROR_OBJ, "expected a string as the second argument, got value of 'i32'"},
+		{`parse("unknown", "123")`, object.ERROR_OBJ, "unknown parse type: 'unknown'"},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+
+		if evaluated == nil {
+			t.Fatalf("testEval returned nil for input: %q", tt.input)
+		}
+
+		if evaluated.Type() != tt.expectedType {
+			t.Errorf("expected type %s, got %s for input: %q", tt.expectedType, evaluated.Type(), tt.input)
+			continue
+		}
+
+		switch expected := tt.expectedVal.(type) {
+		case bool:
+			if evaluated.(*object.Boolean).Value != expected {
+				t.Errorf("expected %v, got %v for input: %q", expected, evaluated.(*object.Boolean).Value, tt.input)
+			}
+		case uint8:
+			if evaluated.(*object.Uint8).Value != expected {
+				t.Errorf("expected %v, got %v for input: %q", expected, evaluated.(*object.Uint8).Value, tt.input)
+			}
+		case uint16:
+			if evaluated.(*object.Uint16).Value != expected {
+				t.Errorf("expected %v, got %v for input: %q", expected, evaluated.(*object.Uint16).Value, tt.input)
+			}
+		case uint32:
+			if evaluated.(*object.Uint32).Value != expected {
+				t.Errorf("expected %v, got %v for input: %q", expected, evaluated.(*object.Uint32).Value, tt.input)
+			}
+		case uint64:
+			if evaluated.(*object.Uint64).Value != expected {
+				t.Errorf("expected %v, got %v for input: %q", expected, evaluated.(*object.Uint64).Value, tt.input)
+			}
+		case int8:
+			if evaluated.(*object.Int8).Value != expected {
+				t.Errorf("expected %v, got %v for input: %q", expected, evaluated.(*object.Int8).Value, tt.input)
+			}
+		case int16:
+			if evaluated.(*object.Int16).Value != expected {
+				t.Errorf("expected %v, got %v for input: %q", expected, evaluated.(*object.Int16).Value, tt.input)
+			}
+		case int32:
+			if tt.expectedType == object.CHAR_OBJ {
+				if evaluated.(*object.Char).Value != expected {
+					t.Errorf("expected %v, got %v for input: %q", expected, evaluated.(*object.Char).Value, tt.input)
+				}
+			} else {
+				if evaluated.(*object.Int32).Value != expected {
+					t.Errorf("expected %v, got %v for input: %q", expected, evaluated.(*object.Int32).Value, tt.input)
+				}
+			}
+		case int64:
+			if evaluated.(*object.Int64).Value != expected {
+				t.Errorf("expected %v, got %v for input: %q", expected, evaluated.(*object.Int64).Value, tt.input)
+			}
+		case float32:
+			if evaluated.(*object.Float32).Value != expected {
+				t.Errorf("expected %v, got %v for input: %q", expected, evaluated.(*object.Float32).Value, tt.input)
+			}
+		case float64:
+			if evaluated.(*object.Float64).Value != expected {
+				t.Errorf("expected %v, got %v for input: %q", expected, evaluated.(*object.Float64).Value, tt.input)
+			}
+		case string: // For Error messages
+			if evaluated.(*object.Error).Message != expected {
+				t.Errorf("expected error %q, got %q for input: %q", expected, evaluated.(*object.Error).Message, tt.input)
+			}
+		case nil:
+			// For NIL_OBJ, the type check above is sufficient
+		}
+	}
+}
