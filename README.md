@@ -1,6 +1,6 @@
 # Sugarglaze
 
-Sugarglaze is a minimalist programming language interpreter written in Go. Designed to do more with less — it strips away syntactic noise to deliver fast, clear, and expressive code.
+Sugarglaze is a minimalist programming language interpreter written in Go. It strips away syntactic noise to deliver fast, clear, and expressive code.
 
 ---
 
