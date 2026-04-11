@@ -57,6 +57,20 @@ func main() {
 
 	// EVALUATING (AST -> Execution)
 	env := object.NewEnvironment()
+	env.Define("bool", &object.String{Value: "bool"}, true, "STRING", true)
+	env.Define("char", &object.String{Value: "char"}, true, "STRING", true)
+	env.Define("i8", &object.String{Value: "i8"}, true, "STRING", true)
+	env.Define("i16", &object.String{Value: "i16"}, true, "STRING", true)
+	env.Define("i32", &object.String{Value: "i32"}, true, "STRING", true)
+	env.Define("i64", &object.String{Value: "i64"}, true, "STRING", true)
+
+	env.Define("u8", &object.String{Value: "u8"}, true, "STRING", true)
+	env.Define("u16", &object.String{Value: "u16"}, true, "STRING", true)
+	env.Define("u32", &object.String{Value: "u32"}, true, "STRING", true)
+	env.Define("u64", &object.String{Value: "u64"}, true, "STRING", true)
+
+	env.Define("f32", &object.String{Value: "f32"}, true, "STRING", true)
+	env.Define("f64", &object.String{Value: "f64"}, true, "STRING", true)
 	result := evaluator.Eval(program, env)
 
 	// Catch and print any runtime type-mismatches or undeclared variable errors
